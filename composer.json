@@ -1,0 +1,25 @@
+{
+    "name": "ethan/swoole-job",
+    "description": "Jobs scheduler based on swoole",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "shenyuede",
+            "email": "syd3050@163.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.5",
+        "ext-swoole": ">=1.9.9",
+        "ext-redis":"*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ethan\\Job\\": "src"
+        }
+    },
+    "packagist": {
+        "type": "composer",
+        "url": "https://packagist.phpcomposer.com"
+    }
+}
