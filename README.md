@@ -1,7 +1,7 @@
 # swoole-jobs
 Jobs scheduler based on swoole
 
-安装
+安装<br>
 git clone https://github.com/syd3050/swoole-jobs.git
 
 cd swoole-jobs
