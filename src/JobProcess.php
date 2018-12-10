@@ -4,8 +4,15 @@ namespace Ethan\Job;
 class JobProcess
 {
     public  $mpid = 0;
-    private $maxProcesses = 600;
+    private $maxProcesses = 2;
     public  $workers = [];
+    private $handlers = null;
+
+    public function __construct()
+    {
+        $config = require_once "./config.php";
+        $this->handlers = $config['jobs-register'];
+    }
 
     public function run(){
         //$begin = microtime(true);
@@ -16,7 +23,10 @@ class JobProcess
         $this->mpid = posix_getpid();
         for($i=1; $i <= $this->maxProcesses; $i++) {
             echo PHP_EOL."\t Starting new child | now we de have {$i} child processes ".PHP_EOL;
-            $this->createProcess($i);
+            if(!isset($this->handlers[$i-1]))
+                continue;
+            $job = new Job($this->handlers[$i-1]);
+            $this->createProcess($i,$job);
         }
         $this->processWait();
     }
@@ -35,9 +45,9 @@ class JobProcess
         }
     }
 
-    public function createProcess($index=null) {
+    public function createProcess($index,Job $job) {
         //不重定向子进程输出，不起用管道
-        $process = new \swoole_process(function(\swoole_process $worker)use($index){
+        $process = new \swoole_process(function(\swoole_process $worker)use($index,$job){
             //mac os不重命名进程
             if (function_exists('swoole_set_process_name') && PHP_OS != 'Darwin') {
                 swoole_set_process_name(sprintf('php-ps:%s',$index));
@@ -48,14 +58,14 @@ class JobProcess
                 'cache'=>['type'=>'Redis','host'=>'127.0.0.1','port'=>6379],
                 'time'=>microtime(true)
             );
-            $job = new Job($config);
             $job->run();
             $worker->exit(0);
         }, false, false);
         //创建进程
         $pid = $process->start();
-        if($pid > 0)
-            $this->workers[] = $pid;
+        if($pid > 0) {
+            $this->workers[$pid] = $pid;
+        }
         return $pid;
     }
 
@@ -69,7 +79,11 @@ class JobProcess
         $index = array_search($pid, $this->workers);
         if($index !== false){
             $index = intval($index);
-            $new_pid = $this->createProcess($index);
+            if(!isset($this->handlers[$index-1]))
+                throw new \Exception('rebootProcess Error: no handler');
+            $job = new Job($this->handlers[$index-1]);
+            unset($this->workers[$pid]);
+            $new_pid = $this->createProcess($index,$job);
             echo PHP_EOL."rebootProcess: {$index}={$new_pid} Done".PHP_EOL;
             return;
         }

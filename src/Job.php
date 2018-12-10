@@ -3,7 +3,7 @@ namespace Ethan\Job;
 
 class Job
 {
-    private $max = 6000;
+    private $max = 2;
     private $key;
     private $cache = null;
     private $config;
@@ -43,14 +43,18 @@ class Job
         while($begin > 0) {
             $data = $this->cache->brPop($this->key,1);
             if (!$data){
-                $current = microtime(true);
-                $cost = $current - $this->config['time'];
-                echo PHP_EOL." cost time:$cost ".PHP_EOL;
+                //$current = microtime(true);
+                //$cost = $current - $this->config['time'];
+                //echo PHP_EOL." cost time:$cost ".PHP_EOL;
+                usleep(rand(19000,20000));
                 continue;
             }
             //$str = implode(" ",$data);
             $begin--;
-            usleep(rand(19000,20000));
+            $current = microtime(true);
+            $cost = $current - $this->config['time'];
+            echo PHP_EOL." cost time:$cost ".PHP_EOL;
+
             //echo PHP_EOL." Working with data: $str ";
         }
     }
